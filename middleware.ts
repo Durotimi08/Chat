@@ -1,11 +1,14 @@
-import { withAuth } from 'next-auth/middleware';
+import { withAuth } from "next-auth/middleware";
 
 export default withAuth({
   pages: {
-    signIn: '/', // Display sign in page as a normal page
+    signIn: "/",
   },
 });
 
-export const config = {
-  matcher: ['/users/:path*', '/conversations/:path*'], // pages that should be protected
+export const config = { 
+  matcher: [
+    "/conversations/:path*",
+    "/users/:path*",
+  ]
 };

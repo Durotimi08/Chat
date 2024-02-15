@@ -1,51 +1,57 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
-import { format } from 'date-fns';
-import { useSession } from 'next-auth/react';
-import clsx from 'clsx';
-import { FullConversationType } from '@/app/types';
-import useOtherUser from '@/app/hooks/useOtherUser';
-import Avatar from '@/app/components/Avatar';
-import AvatarGroup from '@/app/components/AvatarGroup';
+import { useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { Conversation, Message, User } from "@prisma/client";
+import { format } from "date-fns";
+import { useSession } from "next-auth/react";
+import clsx from "clsx";
+
+import Avatar from "@/app/components/Avatar";
+import useOtherUser from "@/app/hooks/useOtherUser";
+import AvatarGroup from "@/app/components/AvatarGroup";
+import { FullConversationType } from "@/app/types";
 
 interface ConversationBoxProps {
-  conversation: FullConversationType;
-  selected: boolean;
+  data: FullConversationType,
+  selected?: boolean;
 }
 
-const ConversationBox: React.FC<ConversationBoxProps> = ({
-  conversation,
-  selected,
+const ConversationBox: React.FC<ConversationBoxProps> = ({ 
+  data, 
+  selected 
 }) => {
-  const otherUser = useOtherUser(conversation);
-
-  const router = useRouter();
+  const otherUser = useOtherUser(data);
   const session = useSession();
+  const router = useRouter();
 
   const handleClick = useCallback(() => {
-    router.push(`/conversations/${conversation.id}`);
-  }, [conversation.id, router]);
+    router.push(`/conversations/${data.id}`);
+  }, [data, router]);
 
   const lastMessage = useMemo(() => {
-    const messages = conversation.messages || [];
+    const messages = data.messages || [];
+
     return messages[messages.length - 1];
-  }, [conversation.messages]);
+  }, [data.messages]);
 
-  const userEmail = useMemo(() => {
-    return session.data?.user?.email;
-  }, [session.data?.user?.email]);
-
+  const userEmail = useMemo(() => session.data?.user?.email,
+  [session.data?.user?.email]);
+  
   const hasSeen = useMemo(() => {
-    if (!lastMessage) return false;
+    if (!lastMessage) {
+      return false;
+    }
 
     const seenArray = lastMessage.seen || [];
 
-    if (!userEmail) return false;
+    if (!userEmail) {
+      return false;
+    }
 
-    return seenArray.filter((user) => user.email === userEmail).length !== 0;
-  }, [lastMessage, userEmail]);
+    return seenArray
+      .filter((user) => user.email === userEmail).length !== 0;
+  }, [userEmail, lastMessage]);
 
   const lastMessageText = useMemo(() => {
     if (lastMessage?.image) {
@@ -53,51 +59,67 @@ const ConversationBox: React.FC<ConversationBoxProps> = ({
     }
 
     if (lastMessage?.body) {
-      return lastMessage.body;
+      return lastMessage?.body
     }
 
-    return 'Started a chat...';
+    return 'Started a conversation';
   }, [lastMessage]);
 
-  return (
+  return ( 
     <div
       onClick={handleClick}
-      className={clsx(
-        'w-full relative flex items-center space-x-3 hover:bg-neutral-100 rounded-lg transition cursor-pointer p-3',
+      className={clsx(`
+        w-full 
+        relative 
+        flex 
+        items-center 
+        space-x-3 
+        p-3 
+        hover:bg-neutral-100
+        rounded-lg
+        transition
+        cursor-pointer
+        `,
         selected ? 'bg-neutral-100' : 'bg-white'
       )}
     >
-      {conversation.isGroup ? (
-        <AvatarGroup users={conversation.users} />
+      {data.isGroup ? (
+        <AvatarGroup users={data.users} />
       ) : (
         <Avatar user={otherUser} />
       )}
-
       <div className="min-w-0 flex-1">
         <div className="focus:outline-none">
+          <span className="absolute inset-0" aria-hidden="true" />
           <div className="flex justify-between items-center mb-1">
             <p className="text-md font-medium text-gray-900">
-              {conversation.name || otherUser.name}
+              {data.name || otherUser.name}
             </p>
-
             {lastMessage?.createdAt && (
-              <p className="text-xs text-gray-400">
+              <p 
+                className="
+                  text-xs 
+                  text-gray-400 
+                  font-light
+                "
+              >
                 {format(new Date(lastMessage.createdAt), 'p')}
               </p>
             )}
           </div>
-
-          <p
-            className={clsx(
-              'truncate text-sm',
+          <p 
+            className={clsx(`
+              truncate 
+              text-sm
+              `,
               hasSeen ? 'text-gray-500' : 'text-black font-medium'
-            )}
-          >
-            {lastMessageText}
-          </p>
+            )}>
+              {lastMessageText}
+            </p>
         </div>
       </div>
     </div>
   );
-};
+}
+ 
 export default ConversationBox;

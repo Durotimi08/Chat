@@ -1,7 +1,6 @@
-import PusherServer from 'pusher';
-import PusherClient from 'pusher-js';
+import PusherServer from 'pusher'
+import PusherClient from 'pusher-js'
 
-// create pusher server instance
 export const pusherServer = new PusherServer({
   appId: process.env.PUSHER_APP_ID!,
   key: process.env.NEXT_PUBLIC_PUSHER_APP_KEY!,
@@ -10,7 +9,6 @@ export const pusherServer = new PusherServer({
   useTLS: true,
 });
 
-// create pusher client instance
 export const pusherClient = new PusherClient(
   process.env.NEXT_PUBLIC_PUSHER_APP_KEY!,
   {
